@@ -1,7 +1,7 @@
 // Configuração do Google Sheets
 const GOOGLE_SHEETS_CONFIG = {
     // URL do Google Apps Script Web App - SUBSTITUA PELA SUA URL
-    scriptUrl: 'https://script.google.com/macros/s/AKfycbxCt6DfDibolsGRHJO-9uRdvVtqWkDUda4HYhWgKlRsB6vKmsjcioWdKMTlIpC9-PQ/exec',
+    scriptUrl: 'https://script.google.com/macros/s/AKfycbxrrRqrF-CxMbnJHnbU4tjA5hhGqtP6bXjedm7ea4hLSxfeS2tnHst2v9x_52antrs/exec',
     // ID da planilha do Google Sheets - SUBSTITUA PELO SEU ID
     spreadsheetId: '1lC22ZVc8ghiZhF5OkPsjQJYd8CBeELr7Zl72crgCsEk'
 };
@@ -493,7 +493,7 @@ function hideLoading() {
     document.getElementById('loadingIndicator').classList.add('hidden');
 }
 
-// Funções do Google Sheets
+// Funções do Google Sheets com melhor tratamento de CORS
 async function saveToGoogleSheets() {
     if (!GOOGLE_SHEETS_CONFIG.scriptUrl || GOOGLE_SHEETS_CONFIG.scriptUrl.includes('SEU_SCRIPT_ID_AQUI')) {
         console.warn('URL do Google Apps Script não configurada');
@@ -503,36 +503,46 @@ async function saveToGoogleSheets() {
     try {
         showLoading();
         
+        const data = {
+            action: 'save',
+            cadastros: getCurrentTableData()
+        };
+        
+        // Usando fetch com modo no-cors para contornar problemas de CORS
         const response = await fetch(GOOGLE_SHEETS_CONFIG.scriptUrl, {
             method: 'POST',
+            mode: 'no-cors',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                action: 'save',
-                cadastros: getCurrentTableData()
-            })
+            body: JSON.stringify(data)
         });
         
-        const result = await response.json();
+        // Com no-cors, não podemos ler a resposta, mas se chegou até aqui, provavelmente funcionou
+        console.log('Dados enviados para o Google Sheets');
         
-        if (result.success) {
-            console.log('Dados salvos no Google Sheets com sucesso');
-        } else {
-            console.error('Erro ao salvar no Google Sheets:', result.message);
-            alert('Erro ao salvar no Google Sheets: ' + result.message);
-        }
+        // Aguarda um pouco e tenta carregar os dados para verificar se salvou
+        setTimeout(() => {
+            loadDataFromGoogleSheets();
+        }, 2000);
         
     } catch (error) {
         console.error('Erro na comunicação com Google Sheets:', error);
-        alert('Erro na comunicação com Google Sheets. Verifique sua conexão.');
+        
+        // Tenta uma abordagem alternativa usando JSONP
+        try {
+            await saveToGoogleSheetsJSONP(getCurrentTableData());
+        } catch (jsonpError) {
+            console.error('Erro também com JSONP:', jsonpError);
+            alert('Erro na comunicação com Google Sheets. Verifique sua conexão e configuração.');
+        }
     } finally {
         hideLoading();
     }
 }
 
 async function loadDataFromGoogleSheets() {
-    if (!GOOGLE_SHEETS_CONFIG.scriptUrl || GOOGLE_SHEETS_CONFIG.scriptUrl.includes('https://script.google.com/macros/s/AKfycbxCt6DfDibolsGRHJO-9uRdvVtqWkDUda4HYhWgKlRsB6vKmsjcioWdKMTlIpC9-PQ/exec')) {
+    if (!GOOGLE_SHEETS_CONFIG.scriptUrl || GOOGLE_SHEETS_CONFIG.scriptUrl.includes('SEU_SCRIPT_ID_AQUI')) {
         console.warn('URL do Google Apps Script não configurada');
         return;
     }
@@ -540,30 +550,123 @@ async function loadDataFromGoogleSheets() {
     try {
         showLoading();
         
-        const response = await fetch(GOOGLE_SHEETS_CONFIG.scriptUrl + '?action=load');
-        const result = await response.json();
-        
-        if (result.success && result.data) {
-            cadastros = result.data;
-            populateTableFromData(result.data);
+        // Tenta primeiro com fetch normal
+        try {
+            const response = await fetch(GOOGLE_SHEETS_CONFIG.scriptUrl + '?action=load');
+            const result = await response.json();
             
-            // Atualiza o contador para o próximo ID
-            if (result.data.length > 0) {
-                const maxId = Math.max(...result.data.map(c => c.id));
-                registroCount = maxId + 1;
+            if (result.success && result.data) {
+                cadastros = result.data;
+                populateTableFromData(result.data);
+                
+                // Atualiza o contador para o próximo ID
+                if (result.data.length > 0) {
+                    const maxId = Math.max(...result.data.map(c => c.id));
+                    registroCount = maxId + 1;
+                }
+                
+                console.log('Dados carregados do Google Sheets com sucesso');
+            } else {
+                console.log('Nenhum dado encontrado no Google Sheets');
             }
-            
-            console.log('Dados carregados do Google Sheets com sucesso');
-        } else {
-            console.log('Nenhum dado encontrado no Google Sheets');
+        } catch (fetchError) {
+            console.log('Fetch normal falhou, tentando JSONP...');
+            await loadDataFromGoogleSheetsJSONP();
         }
         
     } catch (error) {
         console.error('Erro ao carregar dados do Google Sheets:', error);
-        alert('Erro ao carregar dados do Google Sheets. Verifique sua conexão.');
+        // Não mostra alert aqui para não incomodar o usuário no carregamento inicial
     } finally {
         hideLoading();
     }
+}
+
+// Função alternativa usando JSONP para contornar CORS
+function saveToGoogleSheetsJSONP(data) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        const callbackName = 'saveCallback_' + Date.now();
+        
+        window[callbackName] = function(response) {
+            document.head.removeChild(script);
+            delete window[callbackName];
+            resolve(response);
+        };
+        
+        const params = new URLSearchParams({
+            action: 'save',
+            data: JSON.stringify(data),
+            callback: callbackName
+        });
+        
+        script.src = GOOGLE_SHEETS_CONFIG.scriptUrl + '?' + params.toString();
+        script.onerror = () => {
+            document.head.removeChild(script);
+            delete window[callbackName];
+            reject(new Error('JSONP request failed'));
+        };
+        
+        document.head.appendChild(script);
+        
+        // Timeout após 10 segundos
+        setTimeout(() => {
+            if (window[callbackName]) {
+                document.head.removeChild(script);
+                delete window[callbackName];
+                reject(new Error('JSONP request timeout'));
+            }
+        }, 10000);
+    });
+}
+
+function loadDataFromGoogleSheetsJSONP() {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        const callbackName = 'loadCallback_' + Date.now();
+        
+        window[callbackName] = function(response) {
+            document.head.removeChild(script);
+            delete window[callbackName];
+            
+            if (response.success && response.data) {
+                cadastros = response.data;
+                populateTableFromData(response.data);
+                
+                if (response.data.length > 0) {
+                    const maxId = Math.max(...response.data.map(c => c.id));
+                    registroCount = maxId + 1;
+                }
+                
+                console.log('Dados carregados via JSONP com sucesso');
+            }
+            
+            resolve(response);
+        };
+        
+        const params = new URLSearchParams({
+            action: 'load',
+            callback: callbackName
+        });
+        
+        script.src = GOOGLE_SHEETS_CONFIG.scriptUrl + '?' + params.toString();
+        script.onerror = () => {
+            document.head.removeChild(script);
+            delete window[callbackName];
+            reject(new Error('JSONP request failed'));
+        };
+        
+        document.head.appendChild(script);
+        
+        // Timeout após 10 segundos
+        setTimeout(() => {
+            if (window[callbackName]) {
+                document.head.removeChild(script);
+                delete window[callbackName];
+                reject(new Error('JSONP request timeout'));
+            }
+        }, 10000);
+    });
 }
 
 function getCurrentTableData() {

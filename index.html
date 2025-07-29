@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Cadastro de Serviços</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Cadastro e Acompanhamento de Serviços</h1>
+        </header>
+
+        <!-- Formulário de Cadastro -->
+        <section class="form-section">
+            <h2>Cadastro de Serviço</h2>
+            <form id="cadastroForm">
+                <div class="form-group">
+                    <label for="nome">Nome:</label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="telefone">Telefone:</label>
+                    <input type="tel" id="telefone" name="telefone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="objetos">Objetos:</label>
+                    <input type="text" id="objetos" name="objetos" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="descricao">Descrição:</label>
+                    <textarea id="descricao" name="descricao" rows="3" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="diasUteis">Dias úteis:</label>
+                    <input type="number" id="diasUteis" name="diasUteis" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>É orçamento?</label>
+                    <div class="radio-group">
+                        <input type="radio" id="orcamentoSim" name="orcamento" value="sim">
+                        <label for="orcamentoSim" class="radio-btn">SIM</label>
+                        <input type="radio" id="orcamentoNao" name="orcamento" value="nao" checked>
+                        <label for="orcamentoNao" class="radio-btn">NÃO</label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="valorGroup">
+                    <label for="valor">Valor (R$):</label>
+                    <input type="text" id="valor" name="valor" placeholder="Ex: 150,00">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit">Confirmar & Imprimir</button>
+                    <button type="button" id="limparBtn">Limpar</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Seção de Busca -->
+        <section class="search-section">
+            <button id="toggleSearchBtn">BUSCAR SERVIÇO</button>
+            <div id="searchContainer" class="search-container hidden">
+                <h3>Buscar</h3>
+                <input type="text" id="searchInput" placeholder="Digite nome, telefone ou objeto">
+                <button id="searchBtn">Buscar</button>
+                <button id="clearSearchBtn">Limpar Busca</button>
+            </div>
+        </section>
+
+        <!-- Lista de Cadastros -->
+        <section class="list-section">
+            <h2>Lista de Cadastros</h2>
+            <div class="table-container">
+                <table id="cadastrosTable">
+                    <thead>
+                        <tr>
+                            <th>Nº</th>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Objetos</th>
+                            <th>Entrada</th>
+                            <th>Volta</th>
+                            <th>Valor</th>
+                            <th>Pagou?</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cadastrosTableBody">
+                        <!-- Os dados serão inseridos aqui dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Área de Impressão (oculta) -->
+        <div id="printArea" class="print-area">
+            <div class="recibo-header">
+                <div>
+                    <h3>PONTO 17</h3>
+                    <p>Telefones: 3349-3318 / 3229-8972</p>
+                </div>
+                <div class="numero">
+                    <h3>Nº <span id="printId">__</span></h3>
+                </div>
+            </div>
+
+            <h3>Serviços Rápidos</h3>
+            <div class="recibo-info">
+                <div><label>Nome: </label><span id="printNome"></span></div>
+                <div><label>Telefone: </label><span id="printTelefone"></span></div>
+                <div><label>Objetos: </label><span id="printObjetos"></span></div>
+                <div><label>DESCRIÇÃO DO SERVIÇO: </label><span id="printDescricao"></span></div>
+            </div>
+
+            <hr>
+            <h4>OBJETO/ORÇAMENTO</h4>
+            <div class="recibo-info">
+                <div><label>Valor (R$): </label><span id="printValor">___</span></div>
+                <div><label>Data Entrada: </label><span id="printDataEntrada">__/__/__</span></div>
+                <div><label>Data Retirada: </label><span id="printDataRetirada">__/__/__</span></div>
+                <div><label>Garantia até:</label> <span id="printGarantia">__</span></div>
+                <div style="margin-top:10px;">
+                    <label>Termo:</label>
+                    <p id="printTermo">
+                        OBS: ESTOU CIENTE E DE ACORDO COM A ORIENTAÇÃO DO PROCON QUE OS APARELHOS NÃO RETIRADOS NO PRAZO MÁXIMO DE 30 DIAS SERÃO COBRADOS UMA TAXA DE ARMAZENAMENTO DE R$ 1,00 (UM REAL), E NO MÁXIMO 90 DIAS SERÃO VENDIDOS PARA COBRIR CUSTOS OPERACIONAIS, MESMO OS SERVIÇOS, JÁ SENDO PAGOS E/OU SINAL DE 50%.
+                    </p>
+                </div>
+            </div>
+            <div class="assinaturas">
+                <div>
+                    ___________________________<br>
+                    Assinatura Cliente
+                </div>
+                <div>
+                    ___________________________<br>
+                    Assinatura Funcionário Responsável
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Carregando...</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

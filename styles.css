@@ -1,0 +1,416 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    font-size: 2.5rem;
+    font-weight: 300;
+}
+
+/* Seções */
+.form-section,
+.search-section,
+.list-section {
+    background: white;
+    margin-bottom: 30px;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-section h2,
+.list-section h2 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+}
+
+/* Formulário */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Radio buttons */
+.radio-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.radio-group input[type="radio"] {
+    display: none;
+}
+
+.radio-group .radio-btn {
+    padding: 10px 20px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+.radio-group input[type="radio"]:checked + .radio-btn {
+    background-color: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.radio-group .radio-btn:hover {
+    border-color: #667eea;
+}
+
+/* Botões */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+button {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button[type="submit"],
+#searchBtn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+button[type="submit"]:hover,
+#searchBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+#limparBtn,
+#clearSearchBtn {
+    background-color: #6c757d;
+    color: white;
+}
+
+#limparBtn:hover,
+#clearSearchBtn:hover {
+    background-color: #5a6268;
+}
+
+#toggleSearchBtn {
+    background-color: #28a745;
+    color: white;
+    margin-bottom: 15px;
+}
+
+#toggleSearchBtn:hover {
+    background-color: #218838;
+}
+
+/* Busca */
+.search-container {
+    border: 2px solid #28a745;
+    border-radius: 5px;
+    padding: 20px;
+    background-color: #f8fff9;
+}
+
+.search-container h3 {
+    color: #28a745;
+    margin-bottom: 15px;
+}
+
+.search-container input {
+    margin-bottom: 15px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Tabela */
+.table-container {
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+th,
+td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+td {
+    text-align: center;
+}
+
+tr:hover {
+    background-color: #f8f9fa;
+}
+
+.linha-concluida {
+    background-color: #d4edda !important;
+}
+
+.linha-concluida:hover {
+    background-color: #c3e6cb !important;
+}
+
+/* Status de pagamento */
+.pay-bullet {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* Botões de ação */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-buttons button {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 60px;
+}
+
+.btn-edit {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.btn-edit:hover {
+    background-color: #e0a800;
+}
+
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #c82333;
+}
+
+.btn-print {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-print:hover {
+    background-color: #138496;
+}
+
+/* Edição inline */
+.editing-input {
+    width: 100%;
+    padding: 4px;
+    border: 2px solid #ffc107;
+    border-radius: 3px;
+    background-color: #fff3cd;
+}
+
+/* Área de impressão */
+.print-area {
+    display: none;
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+    background: white;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.recibo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+}
+
+.recibo-info {
+    margin: 15px 0;
+}
+
+.recibo-info div {
+    margin: 8px 0;
+}
+
+.recibo-info label {
+    font-weight: bold;
+}
+
+.assinaturas {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    text-align: center;
+}
+
+/* Loading */
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading p {
+    color: white;
+    margin-top: 20px;
+    font-size: 18px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .radio-group {
+        flex-direction: column;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    table {
+        font-size: 14px;
+    }
+    
+    th, td {
+        padding: 8px 4px;
+    }
+}
+
+/* Impressão */
+@media print {
+    body * {
+        visibility: hidden !important;
+    }
+    
+    .print-area,
+    .print-area * {
+        visibility: visible !important;
+    }
+    
+    .print-area {
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        background: white !important;
+    }
+}
+

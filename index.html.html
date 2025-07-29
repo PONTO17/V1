@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cadastro, Lista e Impressão (Google Sheets Automático)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      margin: 20px;
+      background: #f9f9f9;
+    }
+
+    h2, h3, h4 {
+      margin: 5px 0;
+    }
+
+    .container-form {
+      width: 100%;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .container-form h3 {
+      margin-bottom: 15px;
+    }
+    .container-form label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .container-form input,
+    .container-form textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+
+    #search-container {
+      display: none;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .botao-nova-aba {
+      position: fixed;
+      right: 10px;
+      top: 50px;
+      padding: 10px 15px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      display: none; 
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+
+    .linha-concluida {
+      background-color: #ccffcc !important;
+    }
+
+    .pay-bullet {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+
+    .editing-input {
+      width: 95%;
+      background: #fffbe2;
+      border: 1px solid #ccc;
+    }
+
+    .radio-group {
+      margin-bottom: 10px;
+    }
+    .radio-group span {
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    .radio-group input[type="radio"] {
+      display: none;
+    }
+    .radio-group .radio-btn {
+      display: inline-block;
+      padding: 8px 16px;
+      margin-right: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #f0f0f0;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .radio-group input[type="radio"]:checked + .radio-btn {
+      background-color: #007BFF;
+      color: #fff;
+      border-color: #007BFF;
+    }
+
+    .impressao {
+      display: none;
+      position: absolute;
+      left: -99999px;
+      top: -99999px;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      .impressao, .impressao * {
+        visibility: visible !important;
+      }
+      .impressao {
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        background: #fff !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Cadastro e Impressão (Google Sheets Automático)</h2>
+
+  <!-- Ajuste a URL do seu script apps: -->
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_OHylyHlXZbnQASiF4isMIO3ra8OCCnGvLR6IEYEFVhn6-BGbSW-HQdMQX30U4r5Q3g/exec";
+  </script>
+
+  <div class="container-form">
+    <h3>Cadastro</h3>
+    <label for="cad-nome">Nome:</label>
+    <input type="text" id="cad-nome" placeholder="Ex: Marcos Antônio" />
+
+    <label for="cad-telefone">Telefone:</label>
+    <input type="text" id="cad-telefone" placeholder="Ex: (xx) 99999-9999" />
+
+    <label for="cad-servico">Objetos:</label>
+    <input type="text" id="cad-servico" placeholder="Ex: Relógio (marca) dourado" />
+
+    <label for="cad-obs">DESCRIÇÃO DO SERVIÇO:</label>
+    <textarea id="cad-obs" rows="3" placeholder="Ex: Troca de bateria e limpeza interna"></textarea>
+
+    <label for="cad-dias-uteis">Quantos dias úteis?</label>
+    <input type="number" id="cad-dias-uteis" placeholder="Ex: 5" />
+
+    <div class="radio-group">
+      <span>É orçamento?</span>
+      <input type="radio" id="orcamentoSim" name="cad-orcamento" value="sim" />
+      <label for="orcamentoSim" class="radio-btn" onclick="toggleValorField()">SIM</label>
+      <input type="radio" id="orcamentoNao" name="cad-orcamento" value="nao" checked/>
+      <label for="orcamentoNao" class="radio-btn" onclick="toggleValorField()">NÃO</label>
+    </div>
+
+    <div id="cad-valor-field">
+      <label for="cad-valor">Valor (R$):</label>
+      <input type="text" id="cad-valor" placeholder="Ex: 150,00" />
+    </div>
+
+    <button onclick="confirmarCadastro()">Confirmar & Imprimir</button>
+    <button id="btnLimpar" onclick="limparCadastro()">Limpar</button>
+  </div>
+
+  <button onclick="toggleSearch()">BUSCAR SERVIÇO</button>
+  <div id="search-container">
+    <h3>Buscar</h3>
+    <input type="text" id="searchTerm" placeholder="Digite nome, telefone ou objeto" />
+    <button onclick="searchServices()">Buscar</button>
+  </div>
+
+  <h3>Lista de Cadastros</h3>
+  <table id="lista-cadastros">
+    <thead>
+      <tr>
+        <th>Nº</th>
+        <th>Nome</th>
+        <th>Telefone</th>
+        <th>Objetos</th>
+        <th>Entrada</th>
+        <th>Volta</th>
+        <th>Valor (R$)</th>
+        <th>Pagou?</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+
+  <!-- Botão fixo para abrir a folha de impressão em nova aba -->
+  <button class="botao-nova-aba" id="btnNovaAba" onclick="abrirFolhaEmNovaAba()">Abrir Folha de Impressão</button>
+
+  <div class="impressao" id="folha-impressao">
+    <div class="recibo-header">
+      <div>
+        <h3>PONTO 17</h3>
+        <p>Telefones: 3349-3318 / 3229-8972</p>
+      </div>
+      <div class="numero">
+        <h3>Nº <span id="print-id">__</span></h3>
+      </div>
+    </div>
+
+    <h3>Serviços Rápidos</h3>
+    <div class="recibo-info">
+      <div><label>Nome: </label><span id="print-nome"></span></div>
+      <div><label>Telefone: </label><span id="print-telefone"></span></div>
+      <div><label>Objetos: </label><span id="print-servico"></span></div>
+      <div><label>DESCRIÇÃO DO SERVIÇO: </label><span id="print-obs"></span></div>
+    </div>
+
+    <hr />
+    <h4>OBJETO/ORÇAMENTO</h4>
+    <div class="recibo-info">
+      <div><label>Valor (R$): </label><span id="print-valor">___</span></div>
+      <div><label>Data Entrada: </label><span id="print-data-entrada">__/__/__</span></div>
+      <div><label>Data Retirada: </label><span id="print-data-retirada">__/__/__</span></div>
+      <div><label>Garantia até:</label> <span id="print-garantia">__</span></div>
+      <div style="margin-top:10px;">
+        <label>Termo:</label>
+        <p id="print-termo">
+          OBS: ESTOU CIENTE E DE ACORDO COM A ORIENTAÇÃO DO PROCON QUE OS APARELHOS NÃO RETIRADOS NO PRAZO MÁXIMO DE 30 DIAS SERÃO COBRADOS UMA TAXA DE ARMAZENAMENTO DE R$ 1,00 (UM REAL), E NO MÁXIMO 90 DIAS SERÃO VENDIDOS PARA COBRIR CUSTOS OPERACIONAIS, MESMO OS SERVIÇOS, JÁ SENDO PAGOS E/OU SINAL DE 50%.
+        </p>
+      </div>
+    </div>
+    <div class="assinaturas">
+      <div>
+        ___________________________<br>
+        Assinatura Cliente
+      </div>
+      <div>
+        ___________________________<br>
+        Assinatura Funcionário Responsável
+      </div>
+    </div>
+  </div>
+
+<script>
+// Ao carregar a página, tentamos CARREGAR do Google:
+window.addEventListener('load', ()=>{
+  carregarDoGoogle();
+});
+
+let registroCount = 1;
+
+function toggleValorField() {
+  const orcamentoSimRadio = document.getElementById('orcamentoSim');
+  const valorField = document.getElementById('cad-valor-field');
+  valorField.style.display = (orcamentoSimRadio.checked ? 'none' : 'block');
+}
+
+function formatarValor(valorStr) {
+  let num = parseFloat(valorStr.replace(',', '.'));
+  if (isNaN(num)) {
+    return "___";
+  } else {
+    return num.toFixed(2).replace('.', ',');
+  }
+}
+
+function parseDate(dateStr) {
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) {
+    return new Date(0);
+  }
+  return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+}
+
+function imprimirRegistro(linha) {
+  const id = linha.cells[0].textContent;
+  const nome = linha.cells[1].textContent;
+  const telefone = linha.cells[2].textContent;
+  const servico = linha.cells[3].textContent;
+  const dataEntrada = linha.cells[4].textContent;
+  const dataRetirada = linha.cells[5].textContent;
+  const valor = linha.cells[6].textContent;
+  const obs = linha.getAttribute('data-obs') || '';
+
+  document.getElementById('print-id').textContent = id;
+  document.getElementById('print-nome').textContent = nome;
+  document.getElementById('print-telefone').textContent = telefone;
+  document.getElementById('print-servico').textContent = servico;
+  document.getElementById('print-obs').textContent = obs;
+  document.getElementById('print-valor').textContent = valor;
+  document.getElementById('print-data-entrada').textContent = dataEntrada;
+  document.getElementById('print-data-retirada').textContent = dataRetirada;
+
+  const garantiaDate = parseDate(dataRetirada);
+  garantiaDate.setDate(garantiaDate.getDate()+90);
+  const diaGarantia = String(garantiaDate.getDate()).padStart(2,'0');
+  const mesGarantia = String(garantiaDate.getMonth()+1).padStart(2,'0');
+  const anoGarantia = garantiaDate.getFullYear();
+  document.getElementById('print-garantia').textContent = `${diaGarantia}/${mesGarantia}/${anoGarantia}`;
+
+  window.print();
+}
+
+function toggleSearch() {
+  const sc = document.getElementById('search-container');
+  sc.style.display = (sc.style.display==='none'?'block':'none');
+}
+
+function searchServices() {
+  const term = document.getElementById('searchTerm').value.toLowerCase();
+  const rows = document.getElementById('lista-cadastros').getElementsByTagName('tbody')[0].rows;
+  for (let r of rows) {
+    const rowText = r.textContent.toLowerCase();
+    if (rowText.indexOf(term) >= 0) {
+      r.style.display = '';
+    } else {
+      r.style.display = 'none';
+    }
+  }
+}
+
+function confirmarCadastro() {
+  const nome = document.getElementById('cad-nome').value;
+  const telefone = document.getElementById('cad-telefone').value;
+  const servico = document.getElementById('cad-servico').value;
+  const obs = document.getElementById('cad-obs').value;
+  const diasUteis = document.getElementById('cad-dias-uteis').value;
+  const orcamentoSim = document.getElementById('orcamentoSim').checked;
+
+  let valor = '';
+  if (orcamentoSim) {
+    valor = "ORÇAMENTO";
+  } else {
+    valor = formatarValor(document.getElementById('cad-valor').value);
+  }
+
+  const hoje = new Date();
+  const dia = String(hoje.getDate()).padStart(2,'0');
+  const mes = String(hoje.getMonth()+1).padStart(2,'0');
+  const ano = hoje.getFullYear();
+  const dataEntrada = `${dia}/${mes}/${ano}`;
+
+  let dataRetirada='';
+  if (diasUteis) {
+    const d = parseInt(diasUteis,10);
+    if(!isNaN(d)){
+      const ret = new Date(hoje);
+      ret.setDate(ret.getDate()+d);
+      const diaR = String(ret.getDate()).padStart(2,'0');
+      const mesR = String(ret.getMonth()+1).padStart(2,'0');
+      const anoR = ret.getFullYear();
+      dataRetirada=`${diaR}/${mesR}/${anoR}`;
+    }
+  }
+
+  // Cria nova linha
+  const tbody = document.querySelector('#lista-cadastros tbody');
+  const row = tbody.insertRow();
+  row.setAttribute('data-obs', obs);
+
+  row.insertCell(0).textContent = registroCount;
+  createEditableCell(row,1,nome);
+  createEditableCell(row,2,telefone);
+  createEditableCell(row,3,servico);
+  createEditableCell(row,4,dataEntrada);
+  createEditableCell(row,5,dataRetirada);
+  createEditableCell(row,6,valor);
+
+  // Pagou
+  const c7 = row.insertCell(7);
+  const selPay=document.createElement('select');
+  ["Nao pago","Sinal","Pago"].forEach(o=>{
+    const opt=document.createElement('option');
+    opt.value=o; opt.textContent=o;
+    selPay.appendChild(opt);
+  });
+  selPay.value="Nao pago";
+  c7.appendChild(selPay);
+  const bullet=document.createElement('span');
+  bullet.className='pay-bullet';
+  bullet.style.marginLeft='5px';
+  c7.appendChild(bullet);
+  function updatePayBullet(v){
+    if(v==="Nao pago") bullet.style.backgroundColor='#ff0000';
+    else if(v==="Sinal") bullet.style.backgroundColor='#ffff00';
+    else if(v==="Pago") bullet.style.backgroundColor='#00ff00';
+    else bullet.style.backgroundColor='transparent';
+  }
+  selPay.onchange=function(){
+    updatePayBullet(this.value);
+    // SALVA AUTOMATICO
+    salvarNoGoogle();
+  }
+  updatePayBullet(selPay.value);
+
+  // status
+  const c8=row.insertCell(8);
+  const selSt=document.createElement('select');
+  ["EM ORÇAMENTO","EM CONSERTO","CONCLUIDO"].forEach(st=>{
+    const opt=document.createElement('option');
+    opt.value=st; opt.textContent=st;
+    selSt.appendChild(opt);
+  });
+  selSt.value=(orcamentoSim?'EM ORÇAMENTO':'EM CONSERTO');
+  selSt.setAttribute('data-prev', selSt.value);
+  selSt.onchange=function(){
+    if(this.value==="CONCLUIDO"){
+      if(selPay.value!=="Pago"){
+        alert("O cliente precisa pagar para concluir a ordem de serviço.");
+        this.value=this.getAttribute('data-prev');
+        return;
+      }
+    }
+    if(confirm("Deseja realmente alterar o status para "+this.value+"?")){
+      this.setAttribute('data-prev',this.value);
+      updateRowStyleStatus(row,this.value);
+      sortTableByStatusAndDate();
+      // SALVA AUTOMATICO
+      salvarNoGoogle();
+    } else {
+      this.value=this.getAttribute('data-prev');
+    }
+  }
+  c8.appendChild(selSt);
+  updateRowStyleStatus(row, selSt.value);
+
+  // 9 - Ações => Edição inline + exclusão + impressão
+  const c9=row.insertCell(9);
+  let editing=false;
+  const btnEditar=document.createElement('button');
+  btnEditar.textContent='Editar';
+  btnEditar.style.marginRight='5px';
+  btnEditar.onclick=function(){
+    if(!editing){
+      editing=true;
+      btnEditar.textContent='Salvar';
+      // Torna as colunas 1..6 editaveis
+      makeCellEditable(row.cells[1]);
+      makeCellEditable(row.cells[2]);
+      makeCellEditable(row.cells[3]);
+      makeCellEditable(row.cells[4]);
+      makeCellEditable(row.cells[5]);
+      makeCellEditable(row.cells[6]);
+    } else {
+      editing=false;
+      btnEditar.textContent='Editar';
+      finalizeCellEdit(row.cells[1]);
+      finalizeCellEdit(row.cells[2]);
+      finalizeCellEdit(row.cells[3]);
+      finalizeCellEdit(row.cells[4]);
+      finalizeCellEdit(row.cells[5]);
+      finalizeCellEdit(row.cells[6]);
+      // SALVA AUTOMATICO
+      salvarNoGoogle();
+    }
+  }
+  c9.appendChild(btnEditar);
+
+  const btnExcluir=document.createElement('button');
+  btnExcluir.textContent='Excluir';
+  btnExcluir.style.marginRight='5px';
+  btnExcluir.onclick=function(){
+    if(confirm("Deseja realmente excluir este registro?")){
+      row.remove();
+      salvarNoGoogle(); // remove local e salva
+    }
+  };
+  c9.appendChild(btnExcluir);
+
+  const btnImprimir=document.createElement('button');
+  btnImprimir.textContent='Imprimir';
+  btnImprimir.onclick=function(){
+    imprimirRegistro(row);
+  };
+  c9.appendChild(btnImprimir);
+
+  registroCount++;
+  sortTableByStatusAndDate();
+  document.getElementById('btnNovaAba').style.display='block';
+  document.getElementById('btnLimpar').style.backgroundColor='yellow';
+
+  // Força impressão
+  window.print();
+  // Salva automatico
+  salvarNoGoogle();
+}
+
+function createEditableCell(row, cellIndex, initialVal){
+  const cell = row.insertCell(cellIndex);
+  cell.textContent = initialVal;
+}
+
+// Modo de edição
+function makeCellEditable(cell){
+  const val=cell.textContent;
+  const inp=document.createElement('input');
+  inp.type='text';
+  inp.value=val;
+  inp.className='editing-input';
+  cell.textContent='';
+  cell.appendChild(inp);
+}
+function finalizeCellEdit(cell){
+  const inp=cell.querySelector('input');
+  if(inp){
+    cell.textContent=inp.value;
+  }
+}
+
+function updateRowStyleStatus(row,status){
+  if(status==="CONCLUIDO"){
+    row.classList.add('linha-concluida');
+  } else {
+    row.classList.remove('linha-concluida');
+  }
+}
+
+function limparCadastro(){
+  document.getElementById('cad-nome').value='';
+  document.getElementById('cad-telefone').value='';
+  document.getElementById('cad-servico').value='';
+  document.getElementById('cad-obs').value='';
+  document.getElementById('cad-dias-uteis').value='';
+  document.getElementById('cad-valor').value='';
+  document.getElementById('orcamentoNao').checked=true;
+  toggleValorField();
+  document.getElementById('btnNovaAba').style.display='none';
+  document.getElementById('btnLimpar').style.backgroundColor='';
+}
+
+// Lê a tabela => array
+function lerTabelaCadastros(){
+  const rows=document.querySelectorAll('#lista-cadastros tbody tr');
+  const arr=[];
+  for(let tr of rows){
+    const tds=tr.querySelectorAll('td');
+    arr.push({
+      numero: tds[0].textContent,
+      nome:   tds[1].textContent,
+      telefone: tds[2].textContent,
+      objetos: tds[3].textContent,
+      entrada: tds[4].textContent,
+      volta:   tds[5].textContent,
+      valor:   tds[6].textContent,
+      pagou:   tds[7].querySelector('select')?.value || 'Nao pago',
+      status:  tds[8].querySelector('select')?.value || 'EM CONSERTO',
+      obs:     tr.getAttribute('data-obs')||''
+    });
+  }
+  return arr;
+}
+
+// Preenche a tabela
+function preencherTabela(cadastros){
+  const tbody=document.querySelector('#lista-cadastros tbody');
+  tbody.innerHTML='';
+  registroCount=1;
+  cadastros.forEach(c=>{
+    const row=tbody.insertRow();
+    row.setAttribute('data-obs', c.obs||'');
+
+    row.insertCell(0).textContent=c.numero;
+    createEditableCell(row,1,c.nome);
+    createEditableCell(row,2,c.telefone);
+    createEditableCell(row,3,c.objetos);
+    createEditableCell(row,4,c.entrada);
+    createEditableCell(row,5,c.volta);
+    createEditableCell(row,6,c.valor);
+
+    // pagou
+    const payCell=row.insertCell(7);
+    const selPay=document.createElement('select');
+    ["Nao pago","Sinal","Pago"].forEach(o=>{
+      const op=document.createElement('option');
+      op.value=o; op.textContent=o;
+      selPay.appendChild(op);
+    });
+    selPay.value=c.pagou||'Nao pago';
+    payCell.appendChild(selPay);
+    const bullet=document.createElement('span');
+    bullet.className='pay-bullet';
+    bullet.style.marginLeft='5px';
+    payCell.appendChild(bullet);
+    function updateBullet(v){
+      if(v==="Nao pago") bullet.style.backgroundColor='#ff0000';
+      else if(v==="Sinal") bullet.style.backgroundColor='#ffff00';
+      else if(v==="Pago") bullet.style.backgroundColor='#00ff00';
+      else bullet.style.backgroundColor='transparent';
+    }
+    selPay.onchange=function(){
+      updateBullet(this.value);
+      salvarNoGoogle(); 
+    }
+    updateBullet(selPay.value);
+
+    // status
+    const stCell=row.insertCell(8);
+    const selSt=document.createElement('select');
+    ["EM ORÇAMENTO","EM CONSERTO","CONCLUIDO"].forEach(s=>{
+      const op=document.createElement('option');
+      op.value=s; op.textContent=s;
+      selSt.appendChild(op);
+    });
+    selSt.value=c.status||'EM CONSERTO';
+    selSt.setAttribute('data-prev',selSt.value);
+    selSt.onchange=function(){
+      if(this.value==="CONCLUIDO" && selPay.value!=="Pago"){
+        alert("O cliente precisa pagar para concluir a ordem de serviço.");
+        this.value=this.getAttribute('data-prev');
+        return;
+      }
+      if(confirm("Deseja realmente alterar o status para "+this.value+"?")){
+        this.setAttribute('data-prev',this.value);
+        updateRowStyleStatus(row,this.value);
+        sortTableByStatusAndDate();
+        salvarNoGoogle();
+      } else {
+        this.value=this.getAttribute('data-prev');
+      }
+    }
+    stCell.appendChild(selSt);
+    updateRowStyleStatus(row,selSt.value);
+
+    // col 9 => acoes? Se quiser reimplementar aqui,
+    const acCell=row.insertCell(9);
+    // etc...
+
+    const numero=parseInt(c.numero,10);
+    if(numero>=registroCount) registroCount=numero+1;
+  });
+  sortTableByStatusAndDate();
+}
+
+// Carrega do Google automatico
+async function carregarDoGoogle(){
+  try {
+    const resp=await fetch(SCRIPT_URL);
+    const arr=await resp.json();
+    preencherTabela(arr);
+    console.log("Carregado do Google!");
+  } catch(e){
+    console.error("Erro ao ler do Google:", e);
+    alert("Erro ao ler do Google: "+e);
+  }
+}
+
+// Salva no google automatico
+async function salvarNoGoogle(){
+  try {
+    const cadastros=lerTabelaCadastros();
+    const resp=await fetch(SCRIPT_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(cadastros)
+    });
+    const js=await resp.json();
+    if(js.ok){
+      console.log("Salvo na planilha com sucesso!");
+    } else {
+      console.error("Erro do script:", js);
+      alert("Erro do script: "+JSON.stringify(js));
+    }
+  } catch(e){
+    console.error("Falha ao salvar no Google:", e);
+    alert("Falha ao salvar no Google: "+e);
+  }
+}
+
+function getStatusRank(st){
+  if(st==="EM ORÇAMENTO")return 0;
+  if(st==="EM CONSERTO")return 1;
+  if(st==="CONCLUIDO")return 2;
+  return 999;
+}
+function sortTableByStatusAndDate(){
+  const table=document.getElementById('lista-cadastros');
+  const tbody=table.tBodies[0];
+  const rows=Array.from(tbody.rows);
+
+  rows.sort((a,b)=>{
+    const aSel=a.cells[8].querySelector('select');
+    const bSel=b.cells[8].querySelector('select');
+    const aStatus=aSel?aSel.value:'EM CONSERTO';
+    const bStatus=bSel?bSel.value:'EM CONSERTO';
+    const stA=getStatusRank(aStatus);
+    const stB=getStatusRank(bStatus);
+    if(stA!==stB){
+      return stA-stB;
+    } else {
+      const dateA=parseDate(a.cells[4].textContent);
+      const dateB=parseDate(b.cells[4].textContent);
+      return dateA-dateB;
+    }
+  });
+
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+function abrirFolhaEmNovaAba(){
+  var printContent=document.getElementById('folha-impressao').innerHTML;
+  var novaAba=window.open('', '_blank');
+  novaAba.document.write('<html><head><title>Folha de Impressão</title>');
+  novaAba.document.write('<style>body {margin:0; padding:20px; font-family:Arial, sans-serif;} .recibo-header {display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;} .recibo-info label {font-weight:bold;} .assinaturas {display:flex; justify-content:space-between; margin-top:40px;}<\\/style>');
+  novaAba.document.write('</head><body>');
+  novaAba.document.write(printContent);
+  novaAba.document.write('</body></html>');
+  novaAba.document.close();
+}
+</script>
+</body>
+</html>

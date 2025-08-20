@@ -3,157 +3,870 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Cadastro de Serviços</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Ficha de Treino</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Inter (original) + Pacifico (Barbie title) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
+
+    <style>
+        /* =========================
+           PALETA BARBIE (do anexo)
+        ==========================*/
+        :root{
+            --barbie-50:#fff0f7;
+            --barbie-100:#ffe3f1;
+            --barbie-200:#ffc7e3;
+            --barbie-300:#ff9bd0;
+            --barbie-400:#ff63ba;
+            --barbie-500:#ff2ea4;  /* primária */
+            --barbie-600:#e0218a;  /* “Barbie Pink” */
+            --barbie-700:#c01477;
+            --barbie-800:#9b0f63;
+            --barbie-900:#6b0a46;
+            --ink:#1f2937;
+        }
+
+        /* =========================
+           BASE / FUNDO
+        ==========================*/
+        html, body { height: 100%; }
+        body{
+            font-family:'Inter',sans-serif;
+            color:var(--ink);
+            /* fundo inspirado no anexo */
+            background:
+                radial-gradient(1200px 1200px at 110% -10%, var(--barbie-100), transparent 60%),
+                radial-gradient(1000px 1000px at -10% 110%, var(--barbie-50), transparent 60%),
+                #f9fafb;
+            background-attachment: fixed;
+        }
+
+        /* Telas (mantém estrutura, só troca o look) */
+        .screen{
+            display:none;
+            background:transparent;   /* mostra o gradiente do body */
+            min-height:100vh;
+        }
+        .screen.active{ display:block; animation:fadeIn .22s ease-in; }
+        @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+
+        /* =========================
+           CABEÇALHO & TABS
+        ==========================*/
+        /* Título com Barbie style do anexo */
+        .brand{
+            font-family:'Pacifico', cursive;
+            letter-spacing:.5px;
+            text-shadow:0 2px 0 rgba(255,255,255,.6), 0 6px 18px rgba(224,33,138,.2);
+            color:var(--barbie-600) !important;
+        }
+        /* Container de abas com efeito vidro */
+        #workout-tabs{
+            background: rgba(255,255,255,.65) !important;
+            backdrop-filter: blur(8px);
+            border:1px solid rgba(255,255,255,.8);
+            box-shadow:0 12px 26px rgba(224,33,138,.18);
+        }
+        /* Aba ativa em gradiente Barbie */
+        .tab-active{
+            background: linear-gradient(135deg, var(--barbie-500), var(--barbie-600)) !important;
+            color:#fff !important; font-weight:800;
+            box-shadow:0 8px 20px rgba(224,33,138,.28);
+        }
+
+        /* Substitui bg-red-600 (headers internos) por gradiente,
+           sem mexer no HTML/JS */
+        .bg-red-600{
+            background: linear-gradient(135deg, var(--barbie-500), var(--barbie-700)) !important;
+            box-shadow:0 10px 24px rgba(224,33,138,.25);
+        }
+
+        /* =========================
+           CARTÕES / LISTA / GLASS
+        ==========================*/
+        .exercise-item{
+            background: rgba(255,255,255,.82) !important;
+            backdrop-filter: blur(8px);
+            border:1px solid rgba(255,255,255,.8);
+            box-shadow:0 12px 26px rgba(224,33,138,.18);
+        }
+
+        /* Caixinhas de série (ajuste visual) */
+        .set-box{
+            transition: background-color .2s ease, color .2s ease, transform .1s ease, box-shadow .2s ease;
+            border:1px solid rgba(255,255,255,.75);
+        }
+        .set-box:hover{ transform:scale(1.03); box-shadow:0 6px 14px rgba(224,33,138,.18); }
+
+        /* Quando JS troca para bg-blue-500, vira gradiente Barbie */
+        .bg-blue-500{
+            background: linear-gradient(135deg, var(--barbie-400), var(--barbie-600)) !important;
+            color:#fff !important;
+            box-shadow:0 8px 20px rgba(224,33,138,.28);
+        }
+
+        /* Barra de descanso colorida */
+        .rest-timer-progress{
+            background: linear-gradient(90deg, var(--barbie-400), var(--barbie-700)) !important;
+            transition: width .2s linear;
+        }
+
+        /* Intensidade: quando ativa (classe .active já existe no seu JS) */
+        .intensity-btn.active{
+            background: linear-gradient(135deg, var(--barbie-500), var(--barbie-600)) !important;
+            color:#fff !important; border-color:transparent !important;
+            box-shadow:0 8px 20px rgba(224,33,138,.28);
+        }
+        .intensity-btn{ border-color: var(--barbie-500) !important; color: var(--barbie-600) !important; }
+
+        /* Botão principal (✓ Treinei) — seu JS alterna bg-blue-600/bg-gray-500 */
+        .bg-blue-600{
+            background: linear-gradient(135deg, var(--barbie-500), var(--barbie-600)) !important;
+            box-shadow:0 12px 26px rgba(224,33,138,.28);
+            text-transform:uppercase; letter-spacing:.06em;
+        }
+
+        /* Inputs e foco */
+        input:focus, input:focus-visible{
+            outline:none !important;
+            box-shadow:0 0 0 3px rgba(224,33,138,.25) !important;
+            border-color:var(--barbie-500) !important;
+        }
+
+        /* Lista de exercícios pré-definidos */
+        #predefined-exercise-list button{
+            background: rgba(255,255,255,.8) !important;
+            border:1px solid rgba(255,255,255,.8);
+            backdrop-filter: blur(6px);
+            transition: transform .08s ease, box-shadow .2s ease;
+        }
+        #predefined-exercise-list button:hover{
+            transform: translateY(-1px);
+            box-shadow:0 6px 14px rgba(224,33,138,.18);
+        }
+
+        /* Citação */
+        #quote-section #quote-text{ color:#a21caf; }   /* fuchsia-700 vibe */
+        #quote-section #quote-author{ color:#6d28d9; } /* violet-700 vibe */
+    </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Sistema de Cadastro e Acompanhamento de Serviços</h1>
+<body class="bg-gray-200">
+
+    <!-- TELA 1: LISTA DE TREINOS (PRINCIPAL) -->
+    <div id="screen-list" class="max-w-md mx-auto p-4 screen active">
+        <header class="text-center my-4">
+            <!-- Mantém o título original com o “Barbie style” do anexo -->
+            <h1 class="brand text-3xl md:text-4xl">MYWORKOUT 2.0</h1>
         </header>
-
-        <!-- Formulário de Cadastro -->
-        <section class="form-section">
-            <h2>Cadastro de Serviço</h2>
-            <form id="cadastroForm">
-                <div class="form-group">
-                    <label for="nome">Nome:</label>
-                    <input type="text" id="nome" name="nome" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="telefone">Telefone:</label>
-                    <input type="tel" id="telefone" name="telefone" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="objetos">Objetos:</label>
-                    <input type="text" id="objetos" name="objetos" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="descricao">Descrição:</label>
-                    <textarea id="descricao" name="descricao" rows="3" required></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="diasUteis">Dias úteis:</label>
-                    <input type="number" id="diasUteis" name="diasUteis" min="1" required>
-                </div>
-
-                <div class="form-group">
-                    <label>É orçamento?</label>
-                    <div class="radio-group">
-                        <input type="radio" id="orcamentoSim" name="orcamento" value="sim">
-                        <label for="orcamentoSim" class="radio-btn">SIM</label>
-                        <input type="radio" id="orcamentoNao" name="orcamento" value="nao" checked>
-                        <label for="orcamentoNao" class="radio-btn">NÃO</label>
-                    </div>
-                </div>
-
-                <div class="form-group" id="valorGroup">
-                    <label for="valor">Valor (R$):</label>
-                    <input type="text" id="valor" name="valor" placeholder="Ex: 150,00">
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit">Confirmar & Imprimir</button>
-                    <button type="button" id="limparBtn">Limpar</button>
-                </div>
-            </form>
-        </section>
-
-        <!-- Seção de Busca -->
-        <section class="search-section">
-            <button id="toggleSearchBtn">BUSCAR SERVIÇO</button>
-            <div id="searchContainer" class="search-container hidden">
-                <h3>Buscar</h3>
-                <input type="text" id="searchInput" placeholder="Digite nome, telefone ou objeto">
-                <button id="searchBtn">Buscar</button>
-                <button id="clearSearchBtn">Limpar Busca</button>
-            </div>
-        </section>
-
-        <!-- Lista de Cadastros -->
-        <section class="list-section">
-            <h2>Lista de Cadastros</h2>
-            <div class="table-container">
-                <table id="cadastrosTable">
-                    <thead>
-                        <tr>
-                            <th>Nº</th>
-                            <th>Nome</th>
-                            <th>Telefone</th>
-                            <th>Objetos</th>
-                            <th>Entrada</th>
-                            <th>Volta</th>
-                            <th>Valor</th>
-                            <th>Pagou?</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cadastrosTableBody">
-                        <!-- Os dados serão inseridos aqui dinamicamente -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Área de Impressão (oculta) -->
-        <div id="printArea" class="print-area">
-            <div class="recibo-header">
-                <div>
-                    <h3>PONTO 17</h3>
-                    <p>Telefones: 3349-3318 / 3229-8972</p>
-                </div>
-                <div class="numero">
-                    <h3>Nº <span id="printId">__</span></h3>
-                </div>
-            </div>
-
-            <h3>Serviços Rápidos</h3>
-            <div class="recibo-info">
-                <div><label>Nome: </label><span id="printNome"></span></div>
-                <div><label>Telefone: </label><span id="printTelefone"></span></div>
-                <div><label>Objetos: </label><span id="printObjetos"></span></div>
-                <div><label>DESCRIÇÃO DO SERVIÇO: </label><span id="printDescricao"></span></div>
-            </div>
-
-            <hr>
-            <h4>OBJETO/ORÇAMENTO</h4>
-            <div class="recibo-info">
-                <div><label>Valor (R$): </label><span id="printValor">___</span></div>
-                <div><label>Data Entrada: </label><span id="printDataEntrada">__/__/__</span></div>
-                <div><label>Data Retirada: </label><span id="printDataRetirada">__/__/__</span></div>
-                <div><label>Garantia até:</label> <span id="printGarantia">__</span></div>
-                <div style="margin-top:10px;">
-                    <label>Termo:</label>
-                    <p id="printTermo">
-                        OBS: ESTOU CIENTE E DE ACORDO COM A ORIENTAÇÃO DO PROCON QUE OS APARELHOS NÃO RETIRADOS NO PRAZO MÁXIMO DE 30 DIAS SERÃO COBRADOS UMA TAXA DE ARMAZENAMENTO DE R$ 1,00 (UM REAL), E NO MÁXIMO 90 DIAS SERÃO VENDIDOS PARA COBRIR CUSTOS OPERACIONAIS, MESMO OS SERVIÇOS, JÁ SENDO PAGOS E/OU SINAL DE 50%.
-                    </p>
-                </div>
-            </div>
-            <div class="assinaturas">
-                <div>
-                    ___________________________<br>
-                    Assinatura Cliente
-                </div>
-                <div>
-                    ___________________________<br>
-                    Assinatura Funcionário Responsável
-                </div>
-            </div>
+        <div id="workout-tabs" class="flex justify-around p-1 rounded-lg mb-6">
+            <button data-tab="A" class="flex-1 text-center py-2 rounded-md tab-active">A</button>
+            <button data-tab="B" class="flex-1 text-center py-2 rounded-md text-gray-600">B</button>
+            <button data-tab="C" class="flex-1 text-center py-2 rounded-md text-gray-600">C</button>
+            <button data-tab="D" class="flex-1 text-center py-2 rounded-md text-gray-600">D</button>
+            <button data-tab="E" class="flex-1 text-center py-2 rounded-md text-gray-600">E</button>
+            <button data-tab="F" class="flex-1 text-center py-2 rounded-md text-gray-600">F</button>
         </div>
-
-        <!-- Loading indicator -->
-        <div id="loadingIndicator" class="loading hidden">
-            <div class="spinner"></div>
-            <p>Carregando...</p>
+        <div class="flex justify-between items-center mb-6 px-2">
+            <div id="workout-title-container" class="flex-grow">
+                <h2 id="workout-title" class="text-lg font-semibold text-gray-900"></h2>
+            </div>
+            <button id="edit-workout-title-btn" class="p-2 rounded-full hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+            </button>
+        </div>
+        <div id="exercise-list" class="space-y-6">
+            <!-- Exercícios serão renderizados aqui pelo JS -->
+        </div>
+        <div class="mt-8"><button id="add-new-exercise-btn" class="w-full text-blue-600 font-semibold py-3 rounded-lg hover:bg-gray-200">+ Adicionar novo exercício</button></div>
+        <div class="mt-4 mb-20"><button id="finish-workout-btn" data-state="active" class="w-full bg-blue-600 text-white font-bold py-4 rounded-lg shadow-lg transition-colors duration-300">✓ Treinei</button></div>
+    
+        <!-- Seção de Citação Motivacional -->
+        <div id="quote-section" class="max-w-md mx-auto p-4 text-center mt-4 mb-8">
+            <p id="quote-text" class="text-gray-600 italic"></p>
+            <p id="quote-author" class="text-gray-800 font-semibold mt-2"></p>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- TELA 2: EDITAR EXERCÍCIO -->
+    <div id="screen-edit-exercise" class="max-w-md mx-auto screen bg-white">
+        <header class="flex justify-between items-center p-4 bg-red-600 text-white">
+            <button class="go-back" data-target="screen-list">&lt; Voltar</button>
+            <h2 class="font-bold">Editar Exercício</h2>
+            <button id="save-exercise-btn" class="text-white font-semibold">Salvar</button>
+        </header>
+        <div class="p-4 space-y-6 text-black">
+            <input id="edit-exercise-name-input" type="text" class="text-xl font-bold w-full border-b-2 pb-1 focus:outline-none focus:border-blue-500">
+            <div class="flex items-center border-b pb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <input id="edit-rest-time-input" type="text" placeholder="Ex: 75s" class="bg-transparent w-full focus:outline-none">
+            </div>
+            <div class="flex items-center border-b pb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 mr-3" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                <input id="edit-observation-input" type="text" placeholder="Escreva uma observação aqui" class="bg-transparent w-full focus:outline-none">
+            </div>
+            <div>
+                <h4 class="text-gray-500 font-bold mb-2">SÉRIES</h4>
+                <div id="edit-sets-container" class="grid grid-cols-5 gap-2 text-center"></div>
+            </div>
+        </div>
+        <div class="p-4 bg-white">
+            <button id="remove-exercise-btn" class="w-full text-red-500 font-semibold py-3 text-center">Remover Exercício</button>
+        </div>
+    </div>
+
+    <!-- TELA 3: EDITAR SÉRIE -->
+    <div id="screen-edit-set" class="max-w-md mx-auto screen bg-white">
+        <header class="flex justify-between items-center p-4 bg-red-600 text-white">
+            <button class="go-back" data-target="screen-edit-exercise">&lt; Voltar</button>
+            <h2 class="font-bold">Editar Série</h2>
+            <button id="save-set-btn" class="text-white font-semibold">Salvar</button>
+        </header>
+        <div class="p-4 space-y-6 text-black">
+            <h3 id="edit-set-title" class="text-center text-gray-500"></h3>
+            <div class="text-center">
+                <label class="text-gray-500">Reps</label>
+                <input id="edit-reps-input" type="number" class="text-7xl font-bold w-full text-center bg-transparent focus:outline-none" value="10">
+            </div>
+            <div class="text-center border-t pt-4">
+                <label class="text-gray-500">Carga</label>
+                <div class="relative">
+                    <input id="edit-weight-input" type="number" class="text-7xl font-bold w-full text-center bg-transparent focus:outline-none pr-16" value="20">
+                    <span class="absolute inset-y-0 right-0 flex items-center pr-8 text-2xl font-bold text-gray-800 pointer-events-none">kg</span>
+                </div>
+            </div>
+            <div class="border-t pt-4">
+                <h4 class="text-gray-500 font-bold mb-2 text-center">INTENSIDADE</h4>
+                <div id="intensity-buttons-container" class="flex justify-center space-x-2">
+                    <button class="intensity-btn flex-1 py-3 rounded-lg border border-blue-500 text-blue-500 transition-colors duration-200">Leve</button>
+                    <button class="intensity-btn flex-1 py-3 rounded-lg border border-blue-500 text-blue-500 transition-colors duration-200">Pesado</button>
+                    <button class="intensity-btn flex-1 py-3 rounded-lg border border-blue-500 text-blue-500 transition-colors duration-200">Até Falhar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA 4: SELECIONAR EXERCÍCIO -->
+    <div id="screen-select-exercise" class="max-w-md mx-auto screen bg-white">
+        <header class="flex justify-between items-center p-4 bg-red-600 text-white">
+            <button class="go-back" data-target="screen-list">&lt; Voltar</button>
+            <h2 class="font-bold">Adicionar Exercício</h2>
+            <div class="w-16"></div>
+        </header>
+        <div class="p-4">
+            <input id="search-exercise-input" type="text" placeholder="Buscar exercício..." class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80">
+            <ul id="predefined-exercise-list" class="space-y-1">
+                <!-- Exercícios pré-definidos serão populados via JS -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+    /* =========================
+       JS ORIGINAL — INALTERADO
+    ==========================*/
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- CONFIGURAÇÃO E MODELO DE DADOS ---
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVty1w-j0GIu4nwI_ZztUFKWFiOLdq0Tla99DxP6qszAiIP1DPBY3kQ0w2bzswODVp/exec';
+        let workoutsData = {}; 
+        let currentWorkoutId = 'A';
+        let currentExerciseId = null;
+        let currentSetId = null;
+        let activeTimers = {};
+
+        const screens = document.querySelectorAll('.screen');
+        const predefinedExercises = [
+            'Supino Reto c/ Barra', 'Supino Inclinado c/ Halteres', 'Desenvolvimento c/ Halteres', 'Elevação Lateral', 'Tríceps na Polia', 'Rosca Direta', 'Agachamento Livre', 'Leg Press', 'Cadeira Extensora', 'Mesa Flexora', 'Puxada Frontal', 'Remada Curvada', 'Abdominal Infra'
+        ];
+        
+        const quotes = [
+            { quote: "Nada vem fácil, mas enquanto você estiver respirando, sempre estará a um suspiro de realizar seus sonhos. Faça cada suspiro valer a pena.", author: "Kai Greene" },
+            { quote: "Para mim, a vida é estar continuamente faminto. O significado da vida não é simplesmente existir, sobreviver, mas avançar, subir, alcançar, conquistar.", author: "Arnold Schwarzenegger" },
+            { quote: "Se fosse fácil, todo mundo seria campeão, então decida se você será aquela pessoa que vai se tornar um campeão.", author: "Phil Heath" },
+            { quote: "Todo mundo quer ser fisiculturista, mas ninguém quer levantar pesos pesados.", author: "Ronnie Coleman" },
+            { quote: "Lembre-se: você não pode subir a escada do sucesso com as mãos nos bolsos.", author: "Arnold Schwarzenegger" },
+            { quote: "Não há atalhos, apenas trabalho duro – treinar, comer, dormir e treinar mais um pouco.", author: "Ronnie Coleman" },
+            { quote: "Muitos caras têm genética melhor, mas se você trabalhar duro e com consistência, pode superá-los.", author: "Frank Zane" },
+            { quote: "Não há atalhos – tudo é repetição, repetição, repetição.", author: "Arnold Schwarzenegger" },
+            { quote: "Para ser campeão, sua meta é ser um pouco melhor a cada dia, garantindo que cada dia seja uma oportunidade de dar o seu melhor.", author: "Phil Heath" },
+            { quote: "O fisiculturismo é como qualquer outro esporte: para ter sucesso, você precisa se dedicar 100% ao treino, à dieta e ao aspecto mental.", author: "Arnold Schwarzenegger" },
+            { quote: "Moderação no fisiculturismo é um vício; moderação na disciplina é fracasso.", author: "Dorian Yates" },
+            { quote: "Eu nunca trapaceei na dieta nem uma vez – eu nem sequer usava ketchup.", author: "Jay Cutler" },
+            { quote: "Consistência e dedicação são o caminho para o sucesso.", author: "Ronnie Coleman" },
+            { quote: "A continuidade é a forma de construir um físico.", author: "Frank Zane" },
+            { quote: "Treine para estimular, não para aniquilar.", author: "Lee Haney" },
+            { quote: "Cada treino é como um tijolo em um edifício, e toda vez que você faz um treino meia-boca, você deixa de colocar um tijolo – outra pessoa coloca no lugar.", author: "Dorian Yates" },
+            { quote: "As últimas três ou quatro repetições é que fazem o músculo crescer. Essa zona de dor separa o campeão de quem não é.", author: "Arnold Schwarzenegger" },
+            { quote: "Uma única série em intensidade extrema já faz o trabalho de construir músculo. Se você sente que consegue fazer um segundo, então não deu tudo de si no primeiro.", author: "Dorian Yates" },
+            { quote: "O maior erro que a maioria dos iniciantes comete é colocar 100% do esforço na parte positiva do exercício e não dar atenção à parte negativa.", author: "Dorian Yates" },
+            { quote: "Se a barra não está envergando, você só está fingindo.", author: "Ronnie Coleman" },
+            { quote: "A resistência que você enfrenta na academia e na vida só serve para construir um caráter forte.", author: "Arnold Schwarzenegger" },
+            { quote: "Mantenha o foco nos seus objetivos, não importa o que aconteça.", author: "Dorian Yates" },
+            { quote: "A força não vem da vitória. Suas lutas desenvolvem suas forças. Quando você enfrenta dificuldades e decide não se render, isso é força.", author: "Arnold Schwarzenegger" },
+            { quote: "Sua mente desiste cem vezes antes do seu corpo. Sinta a dor e faça mesmo assim.", author: "Ronnie Coleman" },
+            { quote: "A mente sempre falha primeiro; o corpo, não.", author: "Dorian Yates" },
+            { quote: "A mente é o limite. Enquanto ela puder imaginar que você pode fazer algo, você pode, contanto que acredite 100%.", author: "Arnold Schwarzenegger" },
+            { quote: "Seu corpo não sabe o peso absoluto que você levanta; ele apenas reconhece quão pesado parece. O segredo é fazer pesos leves parecerem pesados.", author: "Frank Zane" },
+            { quote: "É simples: se balança, é gordura.", author: "Arnold Schwarzenegger" },
+            { quote: "Você tem que comer muito para ficar grande.", author: "Ronnie Coleman" },
+            { quote: "O sucesso no fisiculturismo depende principalmente da alimentação.", author: "Jay Cutler" },
+            { quote: "O caminho para ganhar músculo é consumir mais calorias do que o necessário para manter seu peso atual.", author: "Dorian Yates" },
+            { quote: "Um físico bem construído é um símbolo de status. Significa que você trabalhou duro por ele – dinheiro nenhum pode comprá-lo. Você não pode pegá-lo emprestado, não pode herdá-lo, não pode roubá-lo. Você não consegue mantê-lo sem trabalho constante. Ele mostra disciplina, respeito próprio, paciência, ética de trabalho e paixão.", author: "Arnold Schwarzenegger" },
+            { quote: "Ser fraco é uma escolha; ser forte também.", author: "Frank Zane" },
+            { quote: "A dor é temporária, o orgulho é para sempre.", author: "Ronnie Coleman" },
+            { quote: "Às vezes, as pessoas com os piores passados acabam criando os melhores futuros.", author: "Kai Greene" },
+            { quote: "A pior coisa que posso ser é igual a todo mundo. Eu odeio isso.", author: "Arnold Schwarzenegger" },
+            { quote: "Qualquer um pode treinar para ser um gladiador. O que te diferencia é ter a mentalidade de um campeão. Quando você nasce para a grandeza, isso transparece em tudo que você faz.", author: "Kai Greene" },
+            { quote: "Ser negativo e preguiçoso é uma doença que leva à dor, dificuldades, depressão, má saúde e fracasso. Seja proativo e se importe de verdade para alcançar o sucesso!", author: "Phil Heath" },
+            { quote: "Assim como na musculação, o fracasso é uma experiência necessária para o crescimento; se nunca testarmos nossos limites, nunca saberemos quão fortes realmente somos.", author: "Arnold Schwarzenegger" },
+            { quote: "Se eu ouvisse meus instintos, estaria no bar atrás de mulheres, e não debaixo de uma barra de 180 kg fazendo agachamento.", author: "Dorian Yates" },
+            { quote: "Aprendi que somos sempre mais fortes do que imaginamos.", author: "Arnold Schwarzenegger" },
+            { quote: "A dedicação faz os sonhos se tornarem realidade.", author: "Ronnie Coleman" },
+            { quote: "Não há segredo: é só fazer.", author: "Ronnie Coleman" },
+            { quote: "Eu nunca desisti, mesmo quando me diziam que eu não conseguiria. Nunca subestime o coração de um campeão.", author: "Kai Greene" },
+            { quote: "Fisiculturismo é uma arte – seu corpo é a tela, os pesos são o pincel e a nutrição é a tinta. Todos nós temos a capacidade de transformar um autorretrato em uma obra-prima.", author: "Kai Greene" },
+            { quote: "Dedicação é fazer o que você ama, mesmo nos dias em que você não está a fim.", author: "Ronnie Coleman" },
+            { quote: "Ninguém que deu o seu melhor jamais se arrependeu disso.", author: "Ronnie Coleman" },
+            { quote: "Não há como eu ter conquistado o que conquistei sem ser um bom aluno e ouvir a sabedoria dos outros.", author: "Phil Heath" },
+            { quote: "Seus sonhos serão sempre os mais importantes para você, mais do que para qualquer outra pessoa. Então continue sonhando, continue acreditando e continue avançando.", author: "Kai Greene" },
+            { quote: "Saia, realize seu sonho e vá em frente.", author: "Kai Greene" }
+        ];
+
+        // --- FUNÇÕES AUXILIARES ---
+        function showScreen(screenId) {
+            screens.forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId)?.classList.add('active');
+        }
+
+        function generateUniqueId() {
+            return `id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        }
+
+        function showRandomQuote() {
+            const quoteText = document.getElementById('quote-text');
+            const quoteAuthor = document.getElementById('quote-author');
+            const randomIndex = Math.floor(Math.random() * quotes.length);
+            const randomQuote = quotes[randomIndex];
+            quoteText.textContent = `"${randomQuote.quote}"`;
+            quoteAuthor.textContent = `– ${randomQuote.author}`;
+        }
+
+        // --- LÓGICA DE DADOS (Google Sheets) ---
+        async function fetchAndOrganizeData() {
+            const exerciseList = document.getElementById('exercise-list');
+            exerciseList.innerHTML = '<p class="text-center text-gray-500">A carregar treinos...</p>';
+            
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const result = await response.json();
+
+                if (result.result !== 'success') throw new Error(result.message);
+
+                workoutsData = result.data;
+                
+                renderWorkout(currentWorkoutId);
+
+            } catch (error) {
+                console.error('Erro ao buscar dados:', error);
+                exerciseList.innerHTML = '<p class="text-center text-red-500">Falha ao carregar treinos.</p>';
+            }
+        }
+
+        async function addExerciseToSheet(exerciseName) {
+            const button = document.querySelector(`#predefined-exercise-list button[data-name="${exerciseName}"]`);
+            if (button) { button.disabled = true; button.textContent = 'A adicionar...'; }
+
+            const newExercise = {
+                action: 'addExercise',
+                workoutId: currentWorkoutId,
+                exerciseId: generateUniqueId(),
+                exerciseName: exerciseName,
+                restTime: '60s',
+                observation: '',
+                sets: JSON.stringify([{ id: generateUniqueId(), reps: 10, weight: 10, intensity: 'Pesado', completed: false }])
+            };
+
+            const formData = new FormData();
+            for (const key in newExercise) { formData.append(key, newExercise[key]); }
+
+            try {
+                const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.result !== 'success') throw new Error(result.message);
+                
+                await fetchAndOrganizeData();
+                showScreen('screen-list');
+            } catch (error) {
+                alert("Não foi possível adicionar o exercício.");
+            } finally {
+                if (button) { button.disabled = false; button.textContent = exerciseName; }
+            }
+        }
+
+        async function updateExerciseInSheet(exerciseToUpdate) {
+            const saveButton = document.getElementById('save-exercise-btn');
+            saveButton.disabled = true;
+            saveButton.textContent = 'A Salvar...';
+
+            const formData = new FormData();
+            formData.append('action', 'updateExercise');
+            formData.append('workoutId', currentWorkoutId);
+            formData.append('exerciseId', exerciseToUpdate.id);
+            formData.append('exerciseName', exerciseToUpdate.name);
+            formData.append('restTime', exerciseToUpdate.restTime);
+            formData.append('observation', exerciseToUpdate.observation);
+            formData.append('sets', JSON.stringify(exerciseToUpdate.sets));
+
+            try {
+                const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.result !== 'success') throw new Error(result.message);
+                
+                showScreen('screen-list');
+            } catch (error) {
+                console.error("Erro ao atualizar exercício:", error);
+                alert("Falha ao salvar as alterações na planilha.");
+            } finally {
+                saveButton.disabled = false;
+                saveButton.textContent = 'Salvar';
+            }
+        }
+
+        async function deleteExerciseFromSheet(exerciseId) {
+            const removeButton = document.getElementById('remove-exercise-btn');
+            removeButton.disabled = true;
+            removeButton.textContent = 'A Remover...';
+
+            const formData = new FormData();
+            formData.append('action', 'deleteExercise');
+            formData.append('exerciseId', exerciseId);
+
+            try {
+                const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.result !== 'success') throw new Error(result.message);
+                
+                workoutsData[currentWorkoutId].exercises = workoutsData[currentWorkoutId].exercises.filter(ex => ex.id !== exerciseId);
+                renderWorkout(currentWorkoutId);
+                showScreen('screen-list');
+
+            } catch (error) {
+                console.error("Erro ao remover exercício:", error);
+                alert("Falha ao remover o exercício da planilha.");
+            } finally {
+                removeButton.disabled = false;
+                removeButton.textContent = 'Remover Exercício';
+            }
+        }
+        
+        async function updateWorkoutTitleInSheet(workoutId, newTitle) {
+            const formData = new FormData();
+            formData.append('action', 'updateWorkoutTitle');
+            formData.append('workoutId', workoutId);
+            formData.append('title', newTitle);
+
+            try {
+                const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.result !== 'success') throw new Error(result.message);
+                console.log("Título salvo na planilha.");
+            } catch (error) {
+                console.error("Erro ao salvar o título:", error);
+                alert("Falha ao salvar o nome do treino.");
+            }
+        }
+
+        async function saveExerciseStateInBackground(exerciseToUpdate) {
+            const formData = new FormData();
+            formData.append('action', 'updateExercise');
+            formData.append('workoutId', currentWorkoutId);
+            formData.append('exerciseId', exerciseToUpdate.id);
+            formData.append('exerciseName', exerciseToUpdate.name);
+            formData.append('restTime', exerciseToUpdate.restTime);
+            formData.append('observation', exerciseToUpdate.observation);
+            formData.append('sets', JSON.stringify(exerciseToUpdate.sets));
+
+            try {
+                const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.result !== 'success') {
+                    console.error("Falha ao salvar estado em segundo plano:", result.message);
+                } else {
+                    console.log(`Estado do exercício '${exerciseToUpdate.name}' salvo.`);
+                }
+            } catch (error) {
+                console.error("Erro de rede ao salvar estado em segundo plano:", error);
+            }
+        }
+
+        // --- LÓGICA DE RENDERIZAÇÃO ---
+        function renderWorkout(workoutId) {
+            const workout = workoutsData[workoutId];
+            if (!workout) return; 
+
+            document.getElementById('workout-title').textContent = workout.title;
+            const exerciseList = document.getElementById('exercise-list');
+            exerciseList.innerHTML = '';
+
+            if (!workout.exercises || workout.exercises.length === 0) {
+                exerciseList.innerHTML = '<p class="text-center text-gray-500">Nenhum exercício neste treino.</p>';
+                return;
+            }
+
+            workout.exercises.forEach((exercise, index) => {
+                const isFirst = index === 0;
+                const isLast = index === workout.exercises.length - 1;
+
+                const setsHTML = (exercise.sets || []).map(set => `
+                    <div class="set-box bg-gray-100 text-black p-2 rounded-lg cursor-pointer" data-completed="${set.completed}" data-set-id="${set.id}" data-intensity="${set.intensity}">
+                        <div class="reps font-bold text-lg">${set.reps}x</div>
+                        <div class="weight text-sm">${set.weight}kg</div>
+                        <div class="status text-xs text-gray-600 mt-1">${set.intensity}</div>
+                        <div class="checkmark hidden text-xs mt-1">Feito ✓</div>
+                    </div>
+                `).join('');
+
+                const exerciseHTML = `
+                <div id="${exercise.id}" class="exercise-item bg-white p-4 rounded-xl shadow-md">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-grow">
+                            <h3 class="exercise-name text-gray-900 font-bold text-lg">${exercise.name}</h3>
+                            <div class="flex items-center text-xs text-gray-500 mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <span class="rest-time">${exercise.restTime} DESCANSO</span>
+                            </div>
+                            <p class="observation-text text-xs text-blue-600 mt-1 ${exercise.observation ? '' : 'hidden'}">${exercise.observation}</p>
+                        </div>
+                        <div class="flex items-center">
+                            <button class="move-exercise-btn p-1" data-direction="up" ${isFirst ? 'disabled' : ''}>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" /></svg>
+                            </button>
+                            <button class="move-exercise-btn p-1" data-direction="down" ${isLast ? 'disabled' : ''}>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <button class="edit-exercise-btn p-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="rest-timer-container bg-gray-300 h-2 w-full rounded-full mt-2 hidden">
+                         <div class="rest-timer-progress bg-blue-500 h-2 rounded-full"></div>
+                    </div>
+                    <div class="sets-container grid grid-cols-4 gap-3 text-center mt-3">${setsHTML}</div>
+                </div>`;
+                exerciseList.insertAdjacentHTML('beforeend', exerciseHTML);
+            });
+            
+            document.querySelectorAll('.set-box[data-completed="true"]').forEach(box => handleSetClick(box, true));
+            updateEventListeners();
+        }
+
+        // --- MANIPULAÇÃO DE EVENTOS DA UI ---
+        function handleSetClick(box, isInitialRender = false) {
+            const exerciseItem = box.closest('.exercise-item');
+            const exerciseId = exerciseItem.id;
+            
+            let isCompleted = box.dataset.completed === 'true';
+            if (!isInitialRender) {
+                isCompleted = !isCompleted;
+                box.dataset.completed = isCompleted;
+                const setId = box.dataset.setId;
+                const exercise = workoutsData[currentWorkoutId].exercises.find(ex => ex.id === exerciseId);
+                const set = exercise.sets.find(s => s.id === setId);
+                set.completed = isCompleted;
+
+                saveExerciseStateInBackground(exercise);
+
+                if (isCompleted) {
+                    startRestTimer(exerciseId);
+                } else {
+                    stopRestTimer(exerciseId);
+                }
+            }
+
+            const statusText = box.querySelector('.status');
+            const checkmark = box.querySelector('.checkmark');
+            
+            if (isCompleted) {
+                box.classList.replace('bg-gray-100', 'bg-blue-500');
+                box.classList.replace('text-black', 'text-white');
+                statusText.style.display = 'none';
+                checkmark.style.display = 'block';
+            } else {
+                box.classList.replace('bg-blue-500', 'bg-gray-100');
+                box.classList.replace('text-white', 'text-black');
+                statusText.style.display = 'block';
+                checkmark.style.display = 'none';
+            }
+        }
+
+        function startRestTimer(exerciseId) {
+            stopRestTimer(exerciseId); 
+
+            const exercise = workoutsData[currentWorkoutId].exercises.find(ex => ex.id === exerciseId);
+            const exerciseItem = document.getElementById(exerciseId);
+            const timerContainer = exerciseItem.querySelector('.rest-timer-container');
+            const timerProgress = exerciseItem.querySelector('.rest-timer-progress');
+            
+            const restDuration = parseInt(exercise.restTime) || 60;
+
+            timerContainer.classList.remove('hidden');
+            timerProgress.style.transition = 'none';
+            timerProgress.style.width = '0%';
+
+            void timerProgress.offsetWidth;
+
+            timerProgress.style.transition = `width ${restDuration}s linear`;
+            timerProgress.style.width = '100%';
+
+            activeTimers[exerciseId] = setTimeout(() => {
+                stopRestTimer(exerciseId);
+            }, restDuration * 1000);
+        }
+
+        function stopRestTimer(exerciseId) {
+            if (activeTimers[exerciseId]) {
+                clearTimeout(activeTimers[exerciseId]);
+                delete activeTimers[exerciseId];
+            }
+            const exerciseItem = document.getElementById(exerciseId);
+            if (exerciseItem) {
+                const timerContainer = exerciseItem.querySelector('.rest-timer-container');
+                const timerProgress = exerciseItem.querySelector('.rest-timer-progress');
+                timerContainer.classList.add('hidden');
+                timerProgress.style.transition = 'none';
+                timerProgress.style.width = '0%';
+            }
+        }
+
+        function moveExercise(exerciseId, direction) {
+            const workout = workoutsData[currentWorkoutId];
+            const exercises = workout.exercises;
+            const index = exercises.findIndex(ex => ex.id === exerciseId);
+
+            if (direction === 'up' && index > 0) {
+                [exercises[index], exercises[index - 1]] = [exercises[index - 1], exercises[index]];
+            } else if (direction === 'down' && index < exercises.length - 1) {
+                [exercises[index], exercises[index + 1]] = [exercises[index + 1], exercises[index]];
+            }
+            renderWorkout(currentWorkoutId);
+        }
+
+        function updateEventListeners() {
+            const exerciseList = document.getElementById('exercise-list');
+            
+            exerciseList.onclick = (e) => {
+                const editBtn = e.target.closest('.edit-exercise-btn');
+                const setBox = e.target.closest('.set-box');
+                const moveBtn = e.target.closest('.move-exercise-btn');
+
+                if (editBtn) {
+                    const exerciseItem = e.target.closest('.exercise-item');
+                    currentExerciseId = exerciseItem.id;
+                    const exercise = workoutsData[currentWorkoutId].exercises.find(ex => ex.id === currentExerciseId);
+                    
+                    document.getElementById('edit-exercise-name-input').value = exercise.name;
+                    document.getElementById('edit-rest-time-input').value = exercise.restTime;
+                    document.getElementById('edit-observation-input').value = exercise.observation;
+                    
+                    const editSetsContainer = document.getElementById('edit-sets-container');
+                    editSetsContainer.innerHTML = '';
+                    
+                    (exercise.sets || []).forEach(set => {
+                        const editSetHTML = `<div class="edit-set-box bg-gray-100 text-gray-800 p-2 rounded-lg relative cursor-pointer" data-set-id="${set.id}" data-reps="${set.reps}" data-weight="${set.weight}" data-intensity="${set.intensity}" data-completed="${set.completed}"><button class="remove-set-btn absolute -top-1 -right-1 bg-red-500 rounded-full h-5 w-5 text-white flex items-center justify-center text-xs">x</button><div class="reps font-bold">${set.reps}x</div><div class="weight text-sm">${set.weight}kg</div><div class="status text-xs text-gray-600">${set.intensity}</div></div>`;
+                        editSetsContainer.insertAdjacentHTML('beforeend', editSetHTML);
+                    });
+                    editSetsContainer.insertAdjacentHTML('beforeend', `<button id="add-new-set-btn" class="bg-gray-200 text-gray-800 p-2 rounded-lg flex items-center justify-center text-3xl font-bold">+</button>`);
+                    
+                    showScreen('screen-edit-exercise');
+                    return;
+                }
+
+                if (setBox) { handleSetClick(setBox); return; }
+                if (moveBtn) {
+                    const exerciseId = moveBtn.closest('.exercise-item').id;
+                    const direction = moveBtn.dataset.direction;
+                    moveExercise(exerciseId, direction);
+                    return;
+                }
+            };
+        }
+
+        // --- INICIALIZAÇÃO E EVENT LISTENERS GLOBAIS ---
+        function initializeApp() {
+            const exerciseListContainer = document.getElementById('predefined-exercise-list');
+            predefinedExercises.forEach(name => {
+                const li = document.createElement('li');
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 bg-gray-100 rounded-lg hover:bg-gray-200";
+                btn.textContent = name;
+                btn.dataset.name = name;
+                li.appendChild(btn);
+                exerciseListContainer.appendChild(li);
+            });
+            fetchAndOrganizeData();
+            showRandomQuote();
+        }
+
+        document.getElementById('workout-tabs').addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                currentWorkoutId = e.target.dataset.tab;
+                document.querySelectorAll('#workout-tabs button').forEach(btn => btn.classList.remove('tab-active'));
+                e.target.classList.add('tab-active');
+                renderWorkout(currentWorkoutId);
+            }
+        });
+
+        document.getElementById('predefined-exercise-list').addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const exerciseName = e.target.textContent;
+                addExerciseToSheet(exerciseName);
+            }
+        });
+
+        const editWorkoutTitleBtn = document.getElementById('edit-workout-title-btn');
+        const workoutTitleContainer = document.getElementById('workout-title-container');
+        editWorkoutTitleBtn.addEventListener('click', () => {
+            const isEditing = workoutTitleContainer.querySelector('input') !== null;
+            if (isEditing) {
+                const input = workoutTitleContainer.querySelector('input');
+                const newTitle = input.value;
+                
+                workoutsData[currentWorkoutId].title = newTitle;
+                
+                updateWorkoutTitleInSheet(currentWorkoutId, newTitle);
+                
+                workoutTitleContainer.innerHTML = `<h2 id="workout-title" class="text-lg font-semibold text-gray-900">${newTitle}</h2>`;
+                editWorkoutTitleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>`;
+
+            } else {
+                const h2 = document.getElementById('workout-title');
+                workoutTitleContainer.innerHTML = `<input type="text" value="${h2.textContent}" class="text-lg font-semibold text-gray-900 bg-white border-b-2 border-blue-500 focus:outline-none w-full">`;
+                workoutTitleContainer.querySelector('input').focus();
+                editWorkoutTitleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`;
+            }
+        });
+
+        document.getElementById('add-new-exercise-btn').onclick = () => showScreen('screen-select-exercise');
+        
+        document.getElementById('search-exercise-input').addEventListener('keyup', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            document.querySelectorAll('#predefined-exercise-list li').forEach(li => {
+                li.style.display = li.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        document.getElementById('edit-sets-container').addEventListener('click', (e) => {
+            const setBox = e.target.closest('.edit-set-box');
+            if (e.target.id === 'add-new-set-btn') {
+                const allSets = document.querySelectorAll('#edit-sets-container .edit-set-box');
+                let lastSetData = { reps: 8, weight: 0, intensity: 'Pesado', completed: false };
+                if (allSets.length > 0) {
+                    const lastSet = allSets[allSets.length - 1];
+                    lastSetData = {
+                        reps: lastSet.dataset.reps,
+                        weight: lastSet.dataset.weight,
+                        intensity: lastSet.dataset.intensity,
+                        completed: false 
+                    };
+                }
+                const newSet = { id: generateUniqueId(), ...lastSetData };
+                const newSetHTML = `<div class="edit-set-box bg-gray-100 text-gray-800 p-2 rounded-lg relative cursor-pointer" data-set-id="${newSet.id}" data-reps="${newSet.reps}" data-weight="${newSet.weight}" data-intensity="${newSet.intensity}" data-completed="${newSet.completed}"><button class="remove-set-btn absolute -top-1 -right-1 bg-red-500 rounded-full h-5 w-5 text-white flex items-center justify-center text-xs">x</button><div class="reps font-bold">${newSet.reps}x</div><div class="weight text-sm">${newSet.weight}kg</div><div class="status text-xs text-gray-600">${newSet.intensity}</div></div>`;
+                e.target.insertAdjacentHTML('beforebegin', newSetHTML); 
+                return;
+            }
+            if (e.target.classList.contains('remove-set-btn')) { e.target.closest('.edit-set-box').remove(); return; }
+            if (!setBox) return;
+
+            currentSetId = setBox.dataset.setId;
+            document.getElementById('edit-set-title').textContent = `${document.getElementById('edit-exercise-name-input').value}: SÉRIE`;
+            document.getElementById('edit-reps-input').value = setBox.dataset.reps;
+            document.getElementById('edit-weight-input').value = setBox.dataset.weight;
+            document.querySelectorAll('#intensity-buttons-container .intensity-btn').forEach(btn => btn.classList.toggle('active', btn.textContent === setBox.dataset.intensity));
+            showScreen('screen-edit-set');
+        });
+
+        document.querySelectorAll('.go-back').forEach(button => { button.onclick = (e) => showScreen(e.currentTarget.dataset.target); });
+
+        document.getElementById('save-set-btn').onclick = () => {
+            const newReps = document.getElementById('edit-reps-input').value;
+            const newWeight = document.getElementById('edit-weight-input').value;
+            const newIntensity = document.querySelector('#intensity-buttons-container .intensity-btn.active').textContent;
+
+            const allSetBoxes = Array.from(document.querySelectorAll('#edit-sets-container .edit-set-box'));
+            const currentIndex = allSetBoxes.findIndex(box => box.dataset.setId === currentSetId);
+
+            if (currentIndex !== -1) {
+                for (let i = currentIndex; i < allSetBoxes.length; i++) {
+                    const box = allSetBoxes[i];
+                    box.dataset.reps = newReps;
+                    box.dataset.weight = newWeight;
+                    box.dataset.intensity = newIntensity;
+
+                    box.querySelector('.reps').textContent = `${newReps}x`;
+                    box.querySelector('.weight').textContent = `${newWeight}kg`;
+                    box.querySelector('.status').textContent = newIntensity;
+                }
+            }
+            showScreen('screen-edit-exercise');
+        };
+
+        document.getElementById('save-exercise-btn').onclick = () => {
+            const exercise = workoutsData[currentWorkoutId].exercises.find(ex => ex.id === currentExerciseId);
+            if (!exercise) return;
+            
+            exercise.name = document.getElementById('edit-exercise-name-input').value;
+            exercise.restTime = document.getElementById('edit-rest-time-input').value;
+            exercise.observation = document.getElementById('edit-observation-input').value;
+            
+            const newSets = [];
+            document.querySelectorAll('#edit-sets-container .edit-set-box').forEach(box => {
+                newSets.push({
+                    id: box.dataset.setId,
+                    reps: box.dataset.reps,
+                    weight: box.dataset.weight,
+                    intensity: box.dataset.intensity,
+                    completed: box.dataset.completed === 'true'
+                });
+            });
+            exercise.sets = newSets;
+
+            updateExerciseInSheet(exercise);
+            renderWorkout(currentWorkoutId);
+        };
+        
+        document.getElementById('remove-exercise-btn').onclick = () => {
+            deleteExerciseFromSheet(currentExerciseId);
+        };
+
+        document.querySelectorAll('#intensity-buttons-container .intensity-btn').forEach(button => {
+            button.onclick = () => { document.querySelectorAll('#intensity-buttons-container .intensity-btn').forEach(btn => btn.classList.remove('active')); button.classList.add('active'); };
+        });
+
+        const finishWorkoutBtn = document.getElementById('finish-workout-btn');
+        finishWorkoutBtn.onclick = () => {
+            const currentState = finishWorkoutBtn.dataset.state;
+            if (currentState === 'active') {
+                finishWorkoutBtn.dataset.state = 'finished';
+                finishWorkoutBtn.textContent = 'Reiniciar Treino';
+                finishWorkoutBtn.classList.replace('bg-blue-600', 'bg-gray-500');
+            } else {
+                finishWorkoutBtn.dataset.state = 'active';
+                finishWorkoutBtn.textContent = '✓ Treinei';
+                finishWorkoutBtn.classList.replace('bg-gray-500', 'bg-blue-600');
+                
+                workoutsData[currentWorkoutId].exercises.forEach(ex => ex.sets.forEach(s => s.completed = false));
+                renderWorkout(currentWorkoutId);
+            }
+        };
+
+        initializeApp();
+    });
+    </script>
 </body>
 </html>
-
